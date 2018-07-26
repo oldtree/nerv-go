@@ -12,6 +12,7 @@ import (
 func main() {
 	log.Infof("アスカ・ラングレー")
 	nerv.BayesLearn()
+	nerv.BayesImpl()
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc,
 		syscall.SIGINT,
