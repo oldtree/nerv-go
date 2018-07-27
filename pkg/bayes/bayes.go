@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/jbrukh/bayesian"
-	//"github.com/jbrukh/bayesian"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -84,6 +84,10 @@ func NewClassifierFromFile(path string) (Classifier, error) {
 
 // Learn executes learning process for this classifier
 func (classifier *Classifier) Learn(docs ...Document) {
+	log.Infof("-----------------------start Learn-----------------------")
+	defer func() {
+		log.Infof("-----------------------end Learn-----------------------")
+	}()
 	classifier.NAllDocument += len(docs)
 
 	for _, doc := range docs {
@@ -106,13 +110,19 @@ func (classifier *Classifier) Learn(docs ...Document) {
 	}
 
 	for class, nDocument := range classifier.NDocumentByClass {
+		log.Infof("class : [%s] nDocument : [%d] NAllDocument : [%d]", class, nDocument, classifier.NAllDocument)
 		classifier.PriorProbabilities[class] = math.Log(float64(nDocument) / float64(classifier.NAllDocument))
 	}
 }
 
 // Classify executes classifying process for tokens
 func (classifier Classifier) Classify(tokens ...string) (map[Class]float64, Class, bool) {
+	log.Infof("-----------------------start Classify-----------------------")
+	defer func() {
+		log.Infof("-----------------------end Classify-----------------------")
+	}()
 	nVocabulary := len(classifier.LearningResults)
+	log.Infof("learning result learn : [%d] ", nVocabulary)
 	posteriorProbabilities := make(map[Class]float64)
 
 	for class, priorProb := range classifier.PriorProbabilities {
@@ -126,6 +136,7 @@ func (classifier Classifier) Classify(tokens ...string) (map[Class]float64, Clas
 	for class, freqByClass := range classifier.NFrequencyByClass {
 		for _, token := range tokens {
 			nToken := classifier.LearningResults[token][class]
+			log.Infof("class : [%s] token : [%s] nToken : [%d] freqByClass : [%d]", class, token, nToken+1, freqByClass+nVocabulary)
 			posteriorProbabilities[class] += math.Log(float64(nToken+1) / float64(freqByClass+nVocabulary))
 		}
 	}
@@ -177,18 +188,18 @@ func (classifier *Classifier) removeDuplicate(tokens ...string) []string {
 	return newTokens
 }
 
-func BayesLearn() {
-	classifier := bayesian.NewClassifier(Good, Bad)
-	goodStuff := []string{"tall", "rich", "handsome"}
-	badStuff := []string{"poor", "smelly", "ugly"}
-	classifier.Learn(goodStuff, Good)
-	classifier.Learn(badStuff, Bad)
-	//classifier.ConvertTermsFreqToTfIdf()
-	scores, likely, _ := classifier.LogScores([]string{"tall", "rich", "handsome"})
-	fmt.Printf("scores : %v ,likely : %d \n", scores, likely)
-	probs, likely, _ := classifier.ProbScores([]string{"tall", "rich", "rich", "rich", "rich", "rich", "rich", "rich", "rich", "rich"})
-	fmt.Printf("probs : %v ,likely : %d \n", probs, likely)
-}
+// func BayesLearn() {
+// 	classifier := bayesian.NewClassifier(Good, Bad)
+// 	goodStuff := []string{"tall", "rich", "handsome"}
+// 	badStuff := []string{"poor", "smelly", "ugly"}
+// 	classifier.Learn(goodStuff, Good)
+// 	classifier.Learn(badStuff, Bad)
+// 	//classifier.ConvertTermsFreqToTfIdf()
+// 	scores, likely, _ := classifier.LogScores([]string{"tall", "rich", "handsome"})
+// 	fmt.Printf("scores : %v ,likely : %d \n", scores, likely)
+// 	probs, likely, _ := classifier.ProbScores([]string{"tall"})
+// 	fmt.Printf("probs : %v ,likely : %d \n", probs, likely)
+// }
 
 func BayesImpl() {
 	classifier := NewClassifier(1)
@@ -198,5 +209,6 @@ func BayesImpl() {
 	classifier.Learn([]Document{Document{"BAD", badStuff}}...)
 	//classifier.ConvertTermsFreqToTfIdf()
 	probeMap, classType, certain := classifier.Classify([]string{"tall", "rich", "handsome"}...)
-	fmt.Printf("probeMap : %v ,classType : %s certain : %t \n", probeMap, classType, certain)
+
+	fmt.Printf("probeMap : %v ,classType : %s certain : %t \n", int(probeMap["GOOD"]), classType, certain)
 }
