@@ -3,7 +3,6 @@ package bayes
 import (
 	"encoding/gob"
 	"fmt"
-	"math"
 	"os"
 
 	"github.com/jbrukh/bayesian"
@@ -111,7 +110,7 @@ func (classifier *Classifier) Learn(docs ...Document) {
 
 	for class, nDocument := range classifier.NDocumentByClass {
 		log.Infof("class : [%s] nDocument : [%d] NAllDocument : [%d]", class, nDocument, classifier.NAllDocument)
-		classifier.PriorProbabilities[class] = math.Log(float64(nDocument) / float64(classifier.NAllDocument))
+		classifier.PriorProbabilities[class] = float64(nDocument) / float64(classifier.NAllDocument)
 	}
 }
 
@@ -136,8 +135,8 @@ func (classifier Classifier) Classify(tokens ...string) (map[Class]float64, Clas
 	for class, freqByClass := range classifier.NFrequencyByClass {
 		for _, token := range tokens {
 			nToken := classifier.LearningResults[token][class]
-			log.Infof("class : [%s] token : [%s] nToken : [%d] freqByClass : [%d]", class, token, nToken+1, freqByClass+nVocabulary)
-			posteriorProbabilities[class] += math.Log(float64(nToken+1) / float64(freqByClass+nVocabulary))
+			log.Infof("class : [%s] token : [%s] nToken : [%d] freqByClass : [%d]", class, token, nToken+1, freqByClass)
+			posteriorProbabilities[class] += float64(nToken+1) / float64(freqByClass+nVocabulary)
 		}
 	}
 
@@ -188,27 +187,18 @@ func (classifier *Classifier) removeDuplicate(tokens ...string) []string {
 	return newTokens
 }
 
-// func BayesLearn() {
-// 	classifier := bayesian.NewClassifier(Good, Bad)
-// 	goodStuff := []string{"tall", "rich", "handsome"}
-// 	badStuff := []string{"poor", "smelly", "ugly"}
-// 	classifier.Learn(goodStuff, Good)
-// 	classifier.Learn(badStuff, Bad)
-// 	//classifier.ConvertTermsFreqToTfIdf()
-// 	scores, likely, _ := classifier.LogScores([]string{"tall", "rich", "handsome"})
-// 	fmt.Printf("scores : %v ,likely : %d \n", scores, likely)
-// 	probs, likely, _ := classifier.ProbScores([]string{"tall"})
-// 	fmt.Printf("probs : %v ,likely : %d \n", probs, likely)
-// }
-
 func BayesImpl() {
 	classifier := NewClassifier(1)
-	goodStuff := []string{"tall", "rich", "handsome"}
-	badStuff := []string{"poor", "smelly", "ugly"}
-	classifier.Learn([]Document{Document{"GOOD", goodStuff}}...)
-	classifier.Learn([]Document{Document{"BAD", badStuff}}...)
+	charlist := []string{"a", "b", "c", "d", "e", "f", "g",
+		"h", "i", "j", "k", "l", "m", "n",
+		"o", "p", "q", "r", "s", "t",
+		"u", "v", "w", "x", "y", "z"}
+	numberlist := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
+	classifier.Learn([]Document{Document{"char", charlist}}...)
+	classifier.Learn([]Document{Document{"number", numberlist}}...)
 	//classifier.ConvertTermsFreqToTfIdf()
-	probeMap, classType, certain := classifier.Classify([]string{"tall", "rich", "handsome"}...)
+	probeMap, classType, certain := classifier.Classify([]string{"a", "b", "c", "d", "e"}...)
 
-	fmt.Printf("probeMap : %v ,classType : %s certain : %t \n", int(probeMap["GOOD"]), classType, certain)
+	fmt.Printf("probeMap : %v ,classType : %s certain : %t \n", int(probeMap["char"]), classType, certain)
+	fmt.Printf("probeMap : %v ,classType : %s certain : %t \n", int(probeMap["number"]), classType, certain)
 }
